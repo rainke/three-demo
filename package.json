@@ -11,6 +11,8 @@
     "typescript": "^2.8.3"
   },
   "dependencies": {
+    "@types/parcel-env": "^0.0.0",
+    "@types/three": "^0.92.3",
     "three": "^0.92.0"
   }
 }
