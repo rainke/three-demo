@@ -13,6 +13,7 @@
   "dependencies": {
     "@types/parcel-env": "^0.0.0",
     "@types/three": "^0.92.3",
+    "dat.gui": "^0.7.2",
     "stats.js": "^0.17.0",
     "three": "^0.92.0"
   }

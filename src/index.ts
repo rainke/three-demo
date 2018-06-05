@@ -1,4 +1,4 @@
-import animate from './learn/1';
+import animate from './learn/3';
 animate();
 
 if(module.hot) {

@@ -1,21 +1,14 @@
 import * as THREE from 'three';
+import * as dat from 'dat.gui';
 import Stats from 'stats.js';
+import utils from './utils';
 
 const scene = new THREE.Scene();
+// scene.fog = new THREE.Fog(0xffffff, 0.15, 100);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/ innerHeight, 0.1, 1000);
-camera.position.x = 30;
-camera.position.y = 40;
-camera.position.z = 30;
-camera.lookAt(scene.position);
-// scene.rotation.y = Math.PI / 2;
-console.log(scene.rotation.y)
+const camera = utils.createCamera(scene.position, 30, 40, 30)
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setClearColor(0x000000);
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const renderer = utils.createRenderer();
 
 const root = document.getElementById('root');
 root.appendChild(renderer.domElement);
@@ -36,10 +29,10 @@ plane.position.x = 15;
 plane.receiveShadow = true;
 scene.add(plane);
 
-const geometry = new THREE.BoxGeometry(4, 4, 4);
-const material = new THREE.MeshLambertMaterial({color: 0x123456});
-const cube = new THREE.Mesh(geometry, material);
-cube.position.x = -4;
+const boxGeometry = new THREE.BoxGeometry(4, 4, 4);
+const boxMaterial = new THREE.MeshLambertMaterial({color: 0x123456});
+const cube = new THREE.Mesh(boxGeometry, boxMaterial);
+cube.position.x = -10;
 cube.position.y = 3;
 cube.position.z = 0;
 cube.castShadow = true;
@@ -54,6 +47,29 @@ sphere.position.z = 2;
 sphere.castShadow = true;
 scene.add(sphere);
 
+const myGeometry = new THREE.Geometry();
+const myMaterial = new THREE.MeshLambertMaterial({color: 0x7777ff});
+const vertices = [
+  new THREE.Vector3(4, 0, 0),
+  new THREE.Vector3(0, 14, 0),
+  new THREE.Vector3(-4, 0, 0),
+  new THREE.Vector3(0, 0, 4),
+];
+const faces = [
+  new THREE.Face3(0, 2, 1),
+  new THREE.Face3(0, 3, 2),
+  new THREE.Face3(1, 2, 3),
+  new THREE.Face3(0, 1, 3),
+];
+myGeometry.vertices = vertices;
+myGeometry.faces = faces;
+myGeometry.computeFaceNormals();
+myGeometry.computeVertexNormals();
+const myBox = new THREE.Mesh(myGeometry, myMaterial);
+// myBox.rotateX(-Math.PI / 2);
+myBox.castShadow = true;
+scene.add(myBox);
+
 const lineGeometry = new THREE.Geometry();
 const lineMaterial = new THREE.LineBasicMaterial({color: 0x0000ff});
 lineGeometry.vertices.push(new THREE.Vector3(-10, 0, 0));
@@ -64,27 +80,39 @@ const line = new THREE.Line(lineGeometry, lineMaterial);
 scene.add(line);
 
 const stats = new Stats();
-stats.showPanel(1);
+stats.showPanel(0);
 document.getElementById('stats').appendChild(stats.dom);
 
+let controls = new function () {
+  this.rotationSpeed = 0.02;
+  this.bouncingSpeed = 0.02;
+}
+
+let gui = new dat.GUI();
+gui.add(controls, 'rotationSpeed', 0, 0.5);
+gui.add(controls, 'bouncingSpeed', 0, 0.5);
+
 let rotation = 0;
+let step = 0;
 
 const animate = () => {
   stats.update();
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
-  cube.rotation.x += 0.2;
-  sphere.rotation.y += 0.1;
+  cube.rotation.x += controls.rotationSpeed;
+  sphere.position.y = 4 + 10 * Math.abs(Math.sin(step));
   scene.rotation.y += (rotation - scene.rotation.y) * 0.02;
+
+  step += controls.bouncingSpeed;
 }
+
 (function() {
   let mouseXOnMouseDown = 0;
   
   const onDocumentMouseMove = (event: MouseEvent) => {
-    console.dir(event);
     event.preventDefault();
     let mouseX = event.clientX;
-    rotation = rotation + (mouseX - mouseXOnMouseDown) * 0.01;
+    rotation = rotation + (mouseX - mouseXOnMouseDown) * 0.001;
   }
 
   const onDocumentMouseUp = (event: MouseEvent) => {
@@ -93,9 +121,11 @@ const animate = () => {
   }
 
   const onDocumentMouseDown = (event: MouseEvent) => {
-    event.preventDefault();
-    document.addEventListener('mousemove', onDocumentMouseMove, false);
-    mouseXOnMouseDown = event.clientX;
+    if(event.target === renderer.domElement) {
+      event.preventDefault();
+      document.addEventListener('mousemove', onDocumentMouseMove, false);
+      mouseXOnMouseDown = event.clientX;
+    }
   }
 
   document.addEventListener('mousedown', onDocumentMouseDown, false);
